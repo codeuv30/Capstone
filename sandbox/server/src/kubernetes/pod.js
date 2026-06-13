@@ -21,7 +21,6 @@ export const createPod = async (sandboxId) => {
           name: "init-container",
           image: "template",
           imagePullPolicy: "IfNotPresent",
-          command: [ "sh", "-c", "cp -r /workspace/. /seed" ],
           volumeMounts: [
             {
               name: "workspace-volume",

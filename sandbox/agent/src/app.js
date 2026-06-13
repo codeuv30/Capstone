@@ -99,11 +99,11 @@ app.get("/read-file", async (req, res) => {
         const content = await fs.promises.readFile(filePath, "utf-8");        
 
         return {
-          [filePath]: content,
+          [filePath.replace(WORKING_DIR, '')]: content,
         };
       } catch (err) {
         return {
-          [filePath]: `Eror reading file: ${err.message}`,
+          [filePath.replace(WORKING_DIR, '')]: `Eror reading file: ${err.message}`,
         };
       }
     }),
@@ -119,8 +119,8 @@ app.get("/read-file", async (req, res) => {
  * @route PATCH /update-files
  * @description Updates the content of files specified in the request body. The request body should container a property 'updates' with a JSON Array of object, each object should have a 'file' property specifying the file path (relative to the working directory) and a 'content' property specifying the new content for the file.
  */
-app.patch("/update-file", async (req, res) => {
-  const updates = req.body;
+app.patch("/update-files", async (req, res) => {
+  const updates = req.body.updates;
 
   if (!updates || !Array.isArray(updates)) {
     return res.status(400).json({
@@ -136,8 +136,17 @@ app.patch("/update-file", async (req, res) => {
 
       const filePath = path.join(WORKING_DIR, file);
 
+      console.log(filePath)
+
+      const dir = path.dirname(filePath);
+
       try {
+        await fs.promises.mkdir(dir, { recursive: true });
         await fs.promises.writeFile(filePath, content, "utf-8");
+
+        return {
+          [filePath.replace(WORKING_DIR, '')]: `File updated successfully`,
+        };
       } catch (err) {
         return {
           [filePath]: `Error updating file: ${err.message}`,
@@ -171,14 +180,21 @@ app.post("/create-files", async (req, res) => {
     files.map(async (fileObj) => {
       const { file, content } = fileObj;
       const filePath = path.join(WORKING_DIR, file);
+
+      const dir = path.dirname(filePath);
+
       try {
+        console.log(dir);
+        await fs.promises.mkdir(dir, { recursive: true });
         await fs.promises.writeFile(filePath, content, "utf-8");
+
         return {
           [filePath]: "File created successfully",
         };
       } catch (error) {
+        console.log(error);
         return {
-          [filePath]: `Error while creating file: ${err.message}`,
+          [filePath]: `Error while creating file: ${error.message}`,
         };
       }
     }),
