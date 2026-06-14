@@ -12,4 +12,10 @@ app.get("/api/ai/healthz", (req, res) => {
     });
 });
 
+app.get("/api/ai/readyz", (req, res) => {
+    res.status(200).json({
+        status: 'ok'
+    });
+});
+
 export default app;
