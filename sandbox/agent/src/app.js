@@ -1,8 +1,13 @@
+import "dotenv/config";
 import express from "express";
 import morgan from "morgan";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from "node:url";
+import { Server } from "socket.io"
+import http from "http";
+import pty from "node-pty"
+import os from "os";
 
 const WORKING_DIR = "/workspace";
 
@@ -10,10 +15,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = http.createServer(app);
 
 app.use(express.json());
+
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "PUT", "POST", "DELETE", "PATCH"],
+  },
+});
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -21,6 +35,36 @@ app.get("/", (req, res) => {
     success: true,
   });
 });
+
+const shell = process.env.SHELL || 'bash';
+
+const ptyProcess= pty.spawn(shell, [], {
+  name: "xterm-color",
+  cols: 80,
+  rows: 30,
+  cwd: "/workspace",
+  env: process.env
+});
+
+ptyProcess.onData((data) => {
+  io.emit("terminal-output", data);
+});
+
+ptyProcess.onExit(({ exitCode, signal }) => {
+  console.log(`PTY process excited with code : ${exitCode}, signal: ${signal}`);
+});
+
+io.on("connection", (socket) => {
+  console.log("Client connected: ", socket.id);
+  
+  socket.on("terminal-input", (data) => {
+    ptyProcess.write(data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected: ", socket.id);
+  });
+})
 
 /**
  * @route GET /list-files
@@ -96,14 +140,15 @@ app.get("/read-file", async (req, res) => {
       const filePath = path.join(WORKING_DIR, file);
 
       try {
-        const content = await fs.promises.readFile(filePath, "utf-8");        
+        const content = await fs.promises.readFile(filePath, "utf-8");
 
         return {
-          [filePath.replace(WORKING_DIR, '')]: content,
+          [filePath.replace(WORKING_DIR, "")]: content,
         };
       } catch (err) {
         return {
-          [filePath.replace(WORKING_DIR, '')]: `Eror reading file: ${err.message}`,
+          [filePath.replace(WORKING_DIR, "")]:
+            `Eror reading file: ${err.message}`,
         };
       }
     }),
@@ -136,7 +181,7 @@ app.patch("/update-files", async (req, res) => {
 
       const filePath = path.join(WORKING_DIR, file);
 
-      console.log(filePath)
+      console.log(filePath);
 
       const dir = path.dirname(filePath);
 
@@ -145,7 +190,7 @@ app.patch("/update-files", async (req, res) => {
         await fs.promises.writeFile(filePath, content, "utf-8");
 
         return {
-          [filePath.replace(WORKING_DIR, '')]: `File updated successfully`,
+          [filePath.replace(WORKING_DIR, "")]: `File updated successfully`,
         };
       } catch (err) {
         return {
@@ -206,4 +251,4 @@ app.post("/create-files", async (req, res) => {
   });
 });
 
-export default app;
+export default httpServer;

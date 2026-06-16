@@ -3,7 +3,8 @@ kind: Config
 
 build:
   tagPolicy:
-    sha256: {}
+    envTemplate:
+      template: "{{.IMAGE_NAME}}:latest"
   artifacts:
     - image: ai-orchestration
       context: ai-orchestration
