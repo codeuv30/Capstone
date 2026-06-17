@@ -134,21 +134,30 @@ app.get("/read-file", async (req, res) => {
   }
 
   const fileList = files.split(",");
+  const imageExtensions = new Set(["svg", "png", "jpg", "jpeg", "webp", "gif", "avif", "bmp"]);
 
   const results = await Promise.all(
     fileList.map(async (file) => {
       const filePath = path.join(WORKING_DIR, file);
+      const ext = path.extname(filePath).slice(1).toLowerCase();
+      const isImage = imageExtensions.has(ext);
 
       try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
+        if (isImage) {
+          // For images, just return the relative path
+          return {
+            [filePath.replace(WORKING_DIR, "")]: filePath.replace(WORKING_DIR, ""),
+          };
+        }
 
+        const content = await fs.promises.readFile(filePath, "utf-8");
         return {
           [filePath.replace(WORKING_DIR, "")]: content,
         };
       } catch (err) {
         return {
           [filePath.replace(WORKING_DIR, "")]:
-            `Eror reading file: ${err.message}`,
+            `Error reading file: ${err.message}`,
         };
       }
     }),
@@ -158,6 +167,58 @@ app.get("/read-file", async (req, res) => {
     message: "file contents",
     files: results,
   });
+});
+
+/**
+ * @route GET /get-file
+ * @description Serves the actual file (images, assets, etc.) for display in browser.
+ * - eg. /get-file?path=/public/favicon.svg
+ */
+app.get("/get-file", async (req, res) => {
+  const filePath = req.query.path;
+
+  if (!filePath) {
+    return res.status(400).json({
+      status: "error",
+      message: "No file path specified in query parameter",
+    });
+  }
+
+  try {
+    const fullPath = path.join(WORKING_DIR, filePath);
+    
+    // Security: prevent directory traversal
+    if (!fullPath.startsWith(WORKING_DIR)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied",
+      });
+    }
+
+    const ext = path.extname(fullPath).slice(1).toLowerCase();
+    const mimeTypes = {
+      svg: "image/svg+xml",
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+      gif: "image/gif",
+      avif: "image/avif",
+      bmp: "image/bmp",
+    };
+
+    const mimeType = mimeTypes[ext] || "application/octet-stream";
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    const fileStream = fs.createReadStream(fullPath);
+    fileStream.pipe(res);
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: `Error reading file: ${err.message}`,
+    });
+  }
 });
 
 /**
