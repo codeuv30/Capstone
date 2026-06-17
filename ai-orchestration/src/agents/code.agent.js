@@ -9,7 +9,7 @@ const contextSchema = z.object({
 });
 
 const model = new ChatMistralAI({
-  model: "codestral-latest",
+  model: "mistral-large-latest",
   apiKey: config.MISTRAL_API_KEY,
 });
 
