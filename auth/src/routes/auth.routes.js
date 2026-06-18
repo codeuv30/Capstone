@@ -5,13 +5,19 @@ import jwt from "jsonwebtoken";
 
 const authRouter = Router();
 
-authRouter.get("/google", passport.authenticate("google", { scope: [ "profile", "email" ] }));
+authRouter.get("/google", passport.authenticate("google", {
+    scope: [ "profile", "email" ],
+    session: false
+}));
 
-authRouter.get("/google/callback", passport.authenticate("google", { failureRedirect: "/" } ), async (req, res) => {
+authRouter.get("/google/callback", passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/" 
+} ), async (req, res) => {
     try {
         const { id, displayName, emails, photos } = req.user;
 
-        let user = User.findOne({ googleId: id, name: displayName, email: emails[0] });
+        let user = await User.findOne({ googleId: id, name: displayName, email: emails[0].value });
 
         if(!user) {
             user = await User.create({
@@ -20,8 +26,6 @@ authRouter.get("/google/callback", passport.authenticate("google", { failureRedi
                 email: emails[0].value,
                 avatar: photos[0].value
             });
-
-            await user.save();
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -29,7 +33,7 @@ authRouter.get("/google/callback", passport.authenticate("google", { failureRedi
         res.cookie("token", token, { httpOnly: true });
         res.redirect("/"); 
     } catch (error) {
-        console.error("Error during Google authentication: ", err);
+        console.error("Error during Google authentication: ", error);
         res.redirect("/");
     }
 });

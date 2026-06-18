@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name:  auth-service
+spec:
+  selector:
+    app:  auth-server
+  type:  ClusterIP
+  ports:
+  - name:  auth-server-port
+    port:  80
+    targetPort:  3000

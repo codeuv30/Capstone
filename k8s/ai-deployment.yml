@@ -40,13 +40,13 @@ spec:
           - name: MISTRAL_API_KEY
             valueFrom:
               secretKeyRef:
-                name: ai-secret
+                name: ai
                 key: MISTRAL_API_KEY
 
           - name: GEMINI_API_KEY
             valueFrom:
               secretKeyRef:
-                name: gemini-ai-secret
+                name: ai
                 key: GEMINI_API_KEY
         ports:
         - containerPort: 3000

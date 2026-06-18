@@ -1,9 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import morgan from "morgan";
 import { createPod } from "./kubernetes/pod.js";
 import { createService } from "./kubernetes/service.js";
 import { v7 as uuid } from "uuid";
 import cors from "cors";
+import redis, { createSandboxKey } from "./config/redis.js";
 
 const app = express();
 
@@ -23,14 +25,13 @@ app.get("/api/sandbox/health", (req, res) => {
     });
 });
 
-app.post("/api/sandbox/start", async (req, res) => {
-    console.log("COMING");
-    
+app.post("/api/sandbox/start", async (req, res) => {    
     const sandboxId = uuid();
 
     const [pod, service] = await Promise.all([
         createPod(sandboxId),
-        createService(sandboxId)
+        createService(sandboxId),
+        createSandboxKey(sandboxId)
     ]);
 
     return res.status(200).json({

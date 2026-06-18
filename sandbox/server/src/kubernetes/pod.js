@@ -19,26 +19,26 @@ export const createPod = async (sandboxId) => {
       initContainers: [
         {
           name: "init-container",
-          image:  "template",
+          image: "template",
           imagePullPolicy: "Always",
-          command: [ 'sh', '-c', 'cp -r /workspace/. /seed/' ],
+          command: ["sh", "-c", "cp -r /workspace/. /seed/"],
           volumeMounts: [
             {
               name: "workspace-volume",
-              mountPath: "/seed"
-            }
-          ]
-        }
+              mountPath: "/seed",
+            },
+          ],
+        },
       ],
       containers: [
         {
-          image:  "template",
+          image: "template",
           imagePullPolicy: "Always",
           name: "sandbox-container",
           ports: [{ containerPort: 5173 }],
           resources: {
             limits: { cpu: "500m", memory: "1Gi" },
-            requests: { cpu: "250m", memory: "500Mi" },
+            requests: { cpu: "100m", memory: "500Mi" },
           },
           volumeMounts: [
             {
@@ -48,13 +48,13 @@ export const createPod = async (sandboxId) => {
           ],
         },
         {
-          image:  "agent",
+          image: "agent",
           imagePullPolicy: "Always",
           name: "agent-container",
           ports: [{ containerPort: 3000 }],
           resources: {
             limits: { cpu: "500m", memory: "1Gi" },
-            requests: { cpu: "250m", memory: "500Mi" },
+            requests: { cpu: "100m", memory: "500Mi" },
           },
           volumeMounts: [
             {
