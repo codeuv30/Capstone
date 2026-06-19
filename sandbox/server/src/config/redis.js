@@ -4,6 +4,15 @@ import { deleteService } from "../kubernetes/service.js";
 
 const redis = new Redis(process.env.REDIS_URL);
 
+redis.on("connect", () => {
+    console.log("Connected to Redi successfully");
+});
+
+redis.on("error", (err) => {
+    err.message = "An error occured while connecting to Redis";
+    throw new err;
+});
+
 const subscriber = new Redis(process.env.REDIS_URL);
 
 export async function createSandboxKey(sandboxId) {

@@ -1,9 +1,11 @@
+import "dotenv/config";
 import express from 'express';
 import morgan from 'morgan';
 import { createProxyMiddleware } from "http-proxy-middleware";
 import http from 'http';
 import { createProxyServer } from 'httpxy';
 import cors from "cors"
+import { refreshTTL } from "../config/redis.js";
 
 const app = express();
 app.use(morgan('dev'));
@@ -53,13 +55,15 @@ wsProxy.on('error', (err, req, socket) => {
     socket?.destroy();
 });
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     const host = req.headers.host;
     const sandboxId = host.split('.')[ 0 ];
 
     if (host.split('.')[ 1 ] === 'agent') {
+        await refreshTTL(sandboxId);
         return getAgentProxy(sandboxId)(req, res, next);
     } else if (host.split('.')[ 1 ] === 'preview') {
+        await refreshTTL(sandboxId);
         return getProxy(sandboxId)(req, res, next);
     }
 });
