@@ -8,8 +8,10 @@ import sandboxRouter from "./routes/sandbox.routes.js";
 const app = express();
 
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "PUT", "POST", "DELETE", "PATCH"]
+    origin: (origin, cb) => cb(null, true),
+    methods: ["GET", "PUT", "POST", "DELETE", "PATCH"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
 
 app.use(morgan("dev"));

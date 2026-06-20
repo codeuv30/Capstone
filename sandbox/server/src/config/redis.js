@@ -5,7 +5,7 @@ import { deleteService } from "../kubernetes/service.js";
 const redis = new Redis(process.env.REDIS_URL);
 
 redis.on("connect", () => {
-    console.log("Connected to Redi successfully");
+    console.log("Connected to Redis successfully");
 });
 
 redis.on("error", (err) => {
