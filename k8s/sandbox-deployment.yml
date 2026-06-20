@@ -23,11 +23,24 @@ spec:
         env:
         - name: PORT
           value: "1000"
+
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
               name: database
               key: REDIS_URL
+
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: database
+              key: SANDBOX
+
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET
         resources:
           limits:
             cpu: "300m"

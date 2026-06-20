@@ -39,10 +39,10 @@ authRouter.get("/google/callback", passport.authenticate("google", {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.cookie("token", token, { httpOnly: true });
-        res.redirect("/"); 
+        res.redirect("http://localhost:8080");
     } catch (error) {
         console.error("Error during Google authentication: ", error);
-        res.redirect("/");
+        res.redirect("http://localhost:8080");
     }
 });
 
